@@ -3,6 +3,8 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://maven.google.com" }//Required for crashlytics
+        maven { url "https://jitpack.io" }
     }
 
     dependencies {

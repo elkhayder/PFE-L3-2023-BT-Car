@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/provider/Bluetooth.dart';
+import 'package:mobile_app/screens/BluetoothConnect.dart';
+import 'package:mobile_app/screens/Cockpit.dart';
+
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => Bluetooth(),
+        )
+      ],
+      child: const EntryPoint(),
+    ),
+  );
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class EntryPoint extends StatelessWidget {
+  const EntryPoint({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    Bluetooth bluetooth = Provider.of<Bluetooth>(context);
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: bluetooth.connection == null ? const BluetoothConnectScreen() : const CockpitScreen(),
     );
   }
 }
