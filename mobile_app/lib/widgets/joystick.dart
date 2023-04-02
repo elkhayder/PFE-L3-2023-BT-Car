@@ -2,18 +2,24 @@ import 'dart:developer';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:mobile_app/provider/Bluetooth.dart';
+import 'package:provider/provider.dart';
 
 class Vec2 {
   double x, y;
 
-  Vec2(this.x, this.y);
+  Vec2(
+    this.x,
+    this.y,
+  );
 }
 
 class Joystick extends StatefulWidget {
   final double size;
   final double handleSize = 50;
+  final void Function(Vec2 pos) onPosUpdate;
 
-  const Joystick({super.key, required this.size});
+  const Joystick({super.key, required this.size, required this.onPosUpdate});
 
   @override
   State<Joystick> createState() => _JoystickState();
@@ -21,6 +27,13 @@ class Joystick extends StatefulWidget {
 
 class _JoystickState extends State<Joystick> {
   Vec2 pos = Vec2(0, 0);
+  late double module;
+
+  @override
+  void initState() {
+    module = widget.size * sqrt2;
+    super.initState();
+  }
 
   void _onPanUpdate(DragUpdateDetails details) {
     // Get X and Y position, and center them in the middle
@@ -37,7 +50,14 @@ class _JoystickState extends State<Joystick> {
       pos.y = centeredY.isNegative ? max(angleSin, centeredY) : min(angleSin, centeredY);
     });
 
-    // debugPrint("Angle: ${angleRad * 180 / pi}, X: ${pos.x}, Y: ${pos.y}");
+    widget.onPosUpdate(
+      // Dividing by half of the size to get the cos and sine values
+      Vec2(
+        pos.x / (widget.size / 2),
+        // Inverting Y axis because I don't know WTF is happening
+        -pos.y / (widget.size / 2),
+      ),
+    );
   }
 
   void _onPanEnd(DragEndDetails details) {
@@ -45,6 +65,7 @@ class _JoystickState extends State<Joystick> {
       pos.x = 0;
       pos.y = 0;
     });
+    widget.onPosUpdate(pos);
   }
 
   @override
