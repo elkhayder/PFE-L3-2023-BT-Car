@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:mobile_app/provider/Bluetooth.dart';
+import 'package:mobile_app/provider/bluetooth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +18,7 @@ class BluetoothConnectScreen extends StatefulWidget {
 
 class _BluetoothConnectScreenState extends State<BluetoothConnectScreen> {
   StreamSubscription<BluetoothDiscoveryResult>? _streamSubscription;
-  List<BluetoothDiscoveryResult> _bluetoothDevices = [];
+  final List<BluetoothDiscoveryResult> _bluetoothDevices = [];
 
   bool isDiscovering = false;
 
@@ -30,8 +30,7 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen> {
 
   @override
   void dispose() {
-    // Avoid memory leak (`setState` after dispose) and cancel discovery
-    _cancelDiscovery();
+    _streamSubscription?.cancel();
 
     super.dispose();
   }
@@ -77,16 +76,6 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen> {
     });
   }
 
-  void _cancelDiscovery() {
-    _streamSubscription?.cancel();
-
-    if (mounted) {
-      setState(() {
-        isDiscovering = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final bluetoothProvider = Provider.of<Bluetooth>(context);
@@ -95,45 +84,55 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen> {
         title: const Text("Bluetooth Connection"),
         actions: [
           IconButton(
-            onPressed: isDiscovering ? _cancelDiscovery : _startDiscovery,
+            onPressed: isDiscovering
+                ? () => setState(() {
+                      _streamSubscription?.cancel();
+                      isDiscovering = false;
+                    })
+                : _startDiscovery,
             icon: Icon(isDiscovering ? Icons.stop : Icons.play_arrow),
           ),
         ],
       ),
-      body: ListView.builder(
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return isDiscovering
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  )
-                : Container();
-          }
-
-          final item = _bluetoothDevices[index - 1];
-          return ListTile(
-            // Device Mac Address
-            title: Text(item.device.address),
-            // Device Name if exists
-            subtitle: item.device.name is String ? Text(item.device.name!) : null,
-            // Connect Status
-            trailing: Text(
-              item.device.isConnected ? "Connected" : "Disconnected",
-              style: TextStyle(
-                color: item.device.isConnected ? Colors.green : Colors.red,
+      body: Column(
+        children: [
+          if (isDiscovering)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(),
+                ),
               ),
             ),
-            onTap: () => bluetoothProvider.connectToDevice(item),
-          );
-        },
-        itemCount: _bluetoothDevices.length + 1,
+          Expanded(
+            child: ListView.builder(
+              itemBuilder: (context, index) {
+                final item = _bluetoothDevices[index];
+                bool isConnected = item.device.isConnected ||
+                    bluetoothProvider.connectedDevice?.device.address == item.device.address;
+
+                return ListTile(
+                  // Device Mac Address
+                  title: Text(item.device.address),
+                  // Device Name if exists
+                  subtitle: item.device.name is String ? Text(item.device.name!) : null,
+                  // Connect Status
+                  trailing: Text(
+                    isConnected ? "Connected" : "Disconnected",
+                    style: TextStyle(
+                      color: isConnected ? Colors.green : Colors.red,
+                    ),
+                  ),
+                  onTap: () => bluetoothProvider.connectToDevice(item),
+                );
+              },
+              itemCount: _bluetoothDevices.length,
+            ),
+          ),
+        ],
       ),
     );
   }

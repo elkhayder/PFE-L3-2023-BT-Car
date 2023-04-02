@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/provider/Bluetooth.dart';
-import 'package:mobile_app/provider/Car.dart';
-import 'package:mobile_app/screens/BluetoothConnect.dart';
-import 'package:mobile_app/screens/Cockpit.dart';
-import 'package:mobile_app/includes/GlobalNavigatorKey.dart';
+import 'package:mobile_app/provider/bluetooth.dart';
+import 'package:mobile_app/provider/car.dart';
+import 'package:mobile_app/screens/cockpit.dart';
+import 'package:mobile_app/includes/global_navigator_key.dart';
 
 import 'package:provider/provider.dart';
 
@@ -24,11 +23,10 @@ class EntryPoint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Bluetooth bluetooth = Provider.of<Bluetooth>(context);
     return MaterialApp(
-      navigatorKey: GlobalNavigatorKey,
+      navigatorKey: globalNavigatorKey,
       debugShowCheckedModeBanner: false,
-      home: bluetooth.connection == null ? const BluetoothConnectScreen() : const CockpitScreen(),
+      home: const CockpitScreen(),
     );
   }
 }

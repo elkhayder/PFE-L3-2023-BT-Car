@@ -2,17 +2,7 @@ import 'dart:developer';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:mobile_app/provider/Bluetooth.dart';
-import 'package:provider/provider.dart';
-
-class Vec2 {
-  double x, y;
-
-  Vec2(
-    this.x,
-    this.y,
-  );
-}
+import 'package:mobile_app/includes/vector.dart';
 
 class Joystick extends StatefulWidget {
   final double size;
