@@ -5,27 +5,28 @@
 
 #include "Wheel.h"
 
-class Car {
+class Car
+{
 public:
-    static uint8_t Velocity;
+    static uint8_t MaxVelocity;
     static uint8_t SpeedCoefficient;
-    
+
     Wheel *frontRight, *frontLeft, *backRight, *backLeft;
 
     Car(int, int, int, int, int, int, int, int, int, int, int, int);
     ~Car();
-    
+
     void setup();
-    void goAhead();
-    void goBack();
+    void goForward();
+    void goBackward();
     void brake();
     void goLeft();
     void goRight();
-    
-    void goAheadRight();
-    void goAheadLeft();
-    void goBackRight();
-    void goBackLeft();
+
+    void goForwardRight();
+    void goForwardLeft();
+    void goBackwardRight();
+    void goBackwardLeft();
 };
 
 #endif

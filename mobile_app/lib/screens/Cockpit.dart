@@ -9,7 +9,7 @@ import 'package:mobile_app/screens/bluetooth_connect.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/includes/vector.dart';
 
-import '../widgets/joystick.dart';
+import '../widgets/arrow.dart';
 
 class CockpitScreen extends StatefulWidget {
   const CockpitScreen({super.key});
@@ -19,9 +19,7 @@ class CockpitScreen extends StatefulWidget {
 }
 
 class _CockpitScreenState extends State<CockpitScreen> {
-  double _velocity = 0;
-  Vec2 pos = Vec2(0, 0);
-  DirectionVec2 direction = DirectionVec2(0, 0);
+  double _velocity = 1.0;
 
   @override
   void initState() {
@@ -44,18 +42,6 @@ class _CockpitScreenState extends State<CockpitScreen> {
     });
 
     Provider.of<Bluetooth>(context, listen: false).sendSpeed(newValue);
-  }
-
-  void _onPosUpdate(Vec2 value) {
-    setState(() {
-      direction = DirectionVec2.fromVec2(value);
-      pos.x = value.x;
-      pos.y = value.y;
-    });
-
-    Provider.of<Bluetooth>(context, listen: false).sendDirectionVector(
-      direction,
-    );
   }
 
   @override
@@ -83,32 +69,50 @@ class _CockpitScreenState extends State<CockpitScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Joystick(
-                size: media.size.height * 0.5,
-                onPosUpdate: _onPosUpdate,
-              ),
-              Column(
-                children: [
-                  const SizedBox(height: 24),
-                  const SizedBox(
-                    width: 200,
-                    child: Image(
-                        image: AssetImage("assets/UnivStrasbourgLogo.png"), fit: BoxFit.fitWidth),
+              AspectRatio(
+                aspectRatio: 1,
+                child: Container(
+                  // color: Colors.red,
+                  padding: const EdgeInsets.all(24),
+                  child: Stack(
+                    children: const [
+                      Arrow(position: 1),
+                      Arrow(position: 2),
+                      Arrow(position: 3),
+                      Arrow(position: 4),
+                      Arrow(position: 5),
+                      Arrow(position: 6),
+                      Arrow(position: 7),
+                      Arrow(position: 8),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  const Text("Direction Vector"),
-                  Text("Normalized Velocity: ${direction.velocity.toPrecision(3)}"),
-                  Text("Angle (Degrees): ${direction.angle * 180 ~/ pi}"),
-                  Text("Max Velocity: ${_velocity.toPrecision(3)} Km/s"),
-                ],
+                ),
               ),
-              RotatedBox(
-                quarterTurns: -1,
-                child: Slider(
-                  value: _velocity,
-                  onChanged: _onVelocityUpdate,
-                  min: 1,
-                  max: 20,
+              Expanded(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 24),
+                    const SizedBox(
+                      width: 200,
+                      child: Image(
+                        image: AssetImage("assets/UnivStrasbourgLogo.png"),
+                        fit: BoxFit.fitWidth,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text("Direction Vector"),
+                    // Text("Normalized Velocity: ${pos.module.toPrecision(3)}"),
+                    // Text("Angle (Degrees): ${pos.angle * 180 ~/ pi}"),
+                    Text("Max Velocity: ${_velocity.toPrecision(3)} Km/s"),
+                    Text("Speed: ${bluetooth.speed} Km/s"),
+                    const SizedBox(height: 24),
+                    Slider(
+                      value: _velocity,
+                      onChanged: _onVelocityUpdate,
+                      min: 1,
+                      max: 20,
+                    ),
+                  ],
                 ),
               ),
             ],

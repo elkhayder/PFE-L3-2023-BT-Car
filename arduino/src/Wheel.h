@@ -3,19 +3,23 @@
 
 #include <Arduino.h>
 
-class Wheel {
+#define FORWARD HIGH
+#define BACKWARD LOW
+
+class Wheel
+{
 public:
   Wheel(int input1, int input2, int enable);
 
   static double Diameter;
-  
+
   void setup();
   void forward(uint8_t velocity);
   void backward(uint8_t velocity);
   void brake();
 
 private:
-  int _in1, _in2, _enable;
+  int in1, in2, enable;
 };
 
 #endif

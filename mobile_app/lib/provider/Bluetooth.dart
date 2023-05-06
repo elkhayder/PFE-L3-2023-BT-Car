@@ -17,6 +17,8 @@ import 'package:mobile_app/includes/vector.dart';
 /// Bluetooth Command Format
 /// Command:ARG1,ARG2,...
 class Bluetooth extends ChangeNotifier {
+  static const POLLING_DURATION = Duration(milliseconds: 100);
+
   BluetoothConnection? _connection;
   BluetoothDiscoveryResult? _connectedDevice;
   StreamSubscription? _stream;
@@ -24,7 +26,17 @@ class Bluetooth extends ChangeNotifier {
   bool get isConnected => _connection != null;
   BluetoothDiscoveryResult? get connectedDevice => _connectedDevice;
 
+  final List<Map<String, Object>> _payloadsBuffer = [];
+
+  double speed = 0;
+
   String _buffer = "";
+
+  Bluetooth() {
+    Timer.periodic(POLLING_DURATION, (timer) {
+      _onInterval();
+    });
+  }
 
   void connectToDevice(BluetoothDiscoveryResult result) async {
     // Disconnect if previously connected
@@ -57,22 +69,12 @@ class Bluetooth extends ChangeNotifier {
   }
 
   void _parsePayload(String payload) {
-    final parts = payload.split(":");
-    if (parts.length != 2) return; // Bad payload
-    final command = parts[0];
-    final args = parts[1].split(":");
+    print(payload);
+    Map<String, Object> json = jsonDecode(payload);
 
-    if (globalNavigatorKey.currentContext == null) return;
-
-    final car = Provider.of<Car>(globalNavigatorKey.currentContext!, listen: false);
-
-    switch (command) {
-      case "Speed":
-        car.speed = double.tryParse(args[0]) ?? 0;
-        break;
-      case "RPM":
-        car.rpm = double.tryParse(args[0]) ?? 0;
-        break;
+    if (json["type"] == "Speed") {
+      speed = json["value"] as double;
+      notifyListeners();
     }
   }
 
@@ -89,6 +91,7 @@ class Bluetooth extends ChangeNotifier {
       // Copy the received bytes exactly
       _buffer += ascii.decode(bytes);
     }
+    print(_buffer);
   }
 
   void _handleDisconnect() {
@@ -100,7 +103,7 @@ class Bluetooth extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _sendObject(Object payload) {
+  void _sendObject(Map<String, Object> payload) {
     final data = Uint8List.fromList(
       [
         ...ascii.encode(jsonEncode(payload)),
@@ -113,14 +116,21 @@ class Bluetooth extends ChangeNotifier {
     print(ascii.decode(data));
   }
 
-  void sendDirectionVector(DirectionVec2 vec) {
+  void _bufferPayload(Map<String, Object> payload) {
+    final index = _payloadsBuffer.indexWhere((e) => e["type"] == payload["type"]);
+    if (index >= 0) {
+      _payloadsBuffer.removeAt(index);
+    }
+    _payloadsBuffer.add(payload);
+  }
+
+  void sendDirection(int direction) {
     final object = {
       "type": "Direction",
-      "velocity": vec.velocity.toPrecision(2),
-      "angle": vec.angle * 180 ~/ pi, // Convert to degrees and discard decimal place
+      "value": direction,
     };
 
-    _sendObject(object);
+    _bufferPayload(object);
   }
 
   void sendSpeed(double value) {
@@ -129,6 +139,13 @@ class Bluetooth extends ChangeNotifier {
       "value": value,
     };
 
-    _sendObject(object);
+    _bufferPayload(object);
+  }
+
+  void _onInterval() {
+    for (var e in _payloadsBuffer) {
+      _sendObject(e);
+    }
+    _payloadsBuffer.clear();
   }
 }
